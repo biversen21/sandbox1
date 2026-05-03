@@ -158,6 +158,20 @@ export default function OptimizerForm() {
     }
   }
 
+  function handleReset() {
+    setResume("");
+    setJobDescription("");
+    setJobUrl("");
+    setTouched({ resume: false, job: false });
+    setExtractionError(null);
+    setAnalysisError(null);
+    setOptimizeError(null);
+    setResult(null);
+    setOptimizedResult(null);
+    setLastPayload(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Analyze your resume</h2>
@@ -212,7 +226,7 @@ export default function OptimizerForm() {
         <p className="mt-4 text-sm text-red-500">{optimizeError}</p>
       )}
 
-      {optimizedResult && <OptimizedResults result={optimizedResult} />}
+      {optimizedResult && <OptimizedResults result={optimizedResult} onReset={handleReset} />}
     </div>
   );
 }
