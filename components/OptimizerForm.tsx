@@ -5,6 +5,7 @@ import ResumeInput from "./ResumeInput";
 import JobInput from "./JobInput";
 import AnalyzeButton from "./AnalyzeButton";
 import AnalysisResults, { type AnalysisResult } from "./AnalysisResults";
+import OptimizedResults, { type OptimizedResult } from "./OptimizedResults";
 
 interface FormErrors {
   resume?: string;
@@ -16,7 +17,14 @@ interface Touched {
   job: boolean;
 }
 
-type LoadingPhase = "extracting" | "analyzing" | null;
+type LoadingPhase = "extracting" | "analyzing" | "optimizing" | null;
+
+interface ResolvedPayload {
+  resumeText: string;
+  jobText: string;
+  company: string | null;
+  role: string | null;
+}
 
 function validate(resumeText: string, jobText: string, jobUrl: string): FormErrors {
   const errors: FormErrors = {};
@@ -34,7 +42,10 @@ export default function OptimizerForm() {
   const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [optimizeError, setOptimizeError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [optimizedResult, setOptimizedResult] = useState<OptimizedResult | null>(null);
+  const [lastPayload, setLastPayload] = useState<ResolvedPayload | null>(null);
 
   const loading = loadingPhase !== null;
   const errors = validate(resume, jobDescription, jobUrl);
@@ -45,14 +56,21 @@ export default function OptimizerForm() {
   };
 
   const loadingLabel =
-    loadingPhase === "extracting" ? "Extracting job posting..." : "Analyzing your resume...";
+    loadingPhase === "extracting"
+      ? "Extracting job posting..."
+      : loadingPhase === "optimizing"
+      ? "Optimizing your resume..."
+      : "Analyzing your resume...";
 
   async function handleAnalyze() {
     if (!isValid || loading) return;
 
     setExtractionError(null);
     setAnalysisError(null);
+    setOptimizeError(null);
     setResult(null);
+    setOptimizedResult(null);
+    setLastPayload(null);
 
     let finalJobText = jobDescription.trim();
     let company: string | null = null;
@@ -88,17 +106,19 @@ export default function OptimizerForm() {
     }
 
     // Step 2: call LLM analysis
+    const payload: ResolvedPayload = {
+      resumeText: resume.trim(),
+      jobText: finalJobText,
+      company,
+      role,
+    };
+    setLastPayload(payload);
     setLoadingPhase("analyzing");
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resumeText: resume.trim(),
-          jobText: finalJobText,
-          company,
-          role,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
@@ -109,6 +129,30 @@ export default function OptimizerForm() {
       setResult(data as AnalysisResult);
     } catch {
       setAnalysisError("Could not reach the analysis service. Please try again.");
+    } finally {
+      setLoadingPhase(null);
+    }
+  }
+
+  async function handleUnlock() {
+    if (!lastPayload || loading) return;
+    setOptimizeError(null);
+    setOptimizedResult(null);
+    setLoadingPhase("optimizing");
+    try {
+      const res = await fetch("/api/optimize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(lastPayload),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setOptimizeError(data.error ?? "Optimization failed. Please try again.");
+        return;
+      }
+      setOptimizedResult(data as OptimizedResult);
+    } catch {
+      setOptimizeError("Could not reach the optimization service. Please try again.");
     } finally {
       setLoadingPhase(null);
     }
@@ -156,7 +200,19 @@ export default function OptimizerForm() {
         <p className="mt-4 text-sm text-red-500">{analysisError}</p>
       )}
 
-      {result && <AnalysisResults result={result} />}
+      {result && (
+        <AnalysisResults
+          result={result}
+          onUnlock={handleUnlock}
+          optimizing={loadingPhase === "optimizing"}
+        />
+      )}
+
+      {optimizeError && (
+        <p className="mt-4 text-sm text-red-500">{optimizeError}</p>
+      )}
+
+      {optimizedResult && <OptimizedResults result={optimizedResult} />}
     </div>
   );
 }
