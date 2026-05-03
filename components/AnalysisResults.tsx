@@ -66,11 +66,21 @@ function LockIcon() {
 
 interface AnalysisResultsProps {
   result: AnalysisResult;
+  onCheckout?: () => void;
+  checkingOut?: boolean;
+  checkoutError?: string | null;
   onUnlock?: () => void;
   optimizing?: boolean;
 }
 
-export default function AnalysisResults({ result, onUnlock, optimizing }: AnalysisResultsProps) {
+export default function AnalysisResults({
+  result,
+  onCheckout,
+  checkingOut,
+  checkoutError,
+  onUnlock,
+  optimizing,
+}: AnalysisResultsProps) {
   const { matchScore, summary, previewImprovements, missingKeywords } = result;
 
   return (
@@ -131,26 +141,35 @@ export default function AnalysisResults({ result, onUnlock, optimizing }: Analys
         </div>
       </div>
 
-      {/* Locked CTA */}
-      <div className="border-2 border-dashed border-indigo-200 rounded-xl p-6 bg-indigo-50/50 text-center">
-        <div className="flex items-center justify-center gap-2 text-indigo-600 mb-2">
+      {/* Paywall CTA */}
+      <div className="border-2 border-indigo-200 rounded-xl p-6 bg-indigo-50/50 text-center">
+        <div className="flex items-center justify-center gap-2 text-indigo-700 mb-2">
           <LockIcon />
           <span className="text-base font-semibold">Unlock optimized resume + interview prep</span>
         </div>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-gray-500 mb-5">
           Get a fully rewritten resume tailored to this role, a complete improvement plan, and
           interview prep with company-specific talking points.
         </p>
         <button
-          disabled
-          className="bg-indigo-600 text-white font-semibold px-8 py-2.5 rounded-lg opacity-50 cursor-not-allowed text-sm"
+          onClick={onCheckout}
+          disabled={!onCheckout || checkingOut}
+          className="bg-indigo-600 text-white font-semibold px-8 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm shadow-sm"
         >
-          Unlock Full Analysis — Coming Soon
+          {checkingOut
+            ? "Redirecting to checkout..."
+            : "Unlock optimized resume + interview prep — $7"}
         </button>
+        {checkoutError && (
+          <p className="text-xs text-red-500 mt-3">{checkoutError}</p>
+        )}
+        <p className="text-xs text-gray-400 mt-3">
+          Applying to multiple jobs? Bundle pricing coming soon.
+        </p>
       </div>
 
-      {/* Dev-only bypass */}
-      {onUnlock && (
+      {/* Dev-only bypass — visible only when NEXT_PUBLIC_ENABLE_DEV_UNLOCK=true */}
+      {process.env.NEXT_PUBLIC_ENABLE_DEV_UNLOCK === "true" && onUnlock && (
         <div className="flex items-center gap-3 pt-2">
           <span className="text-xs font-mono bg-yellow-100 text-yellow-700 border border-yellow-300 px-2 py-0.5 rounded">
             DEV ONLY
