@@ -163,9 +163,11 @@ function DownloadIcon({ className }: { className?: string }) {
 export default function OptimizedResults({
   result,
   onReset,
+  paid = false,
 }: {
   result: OptimizedResult;
   onReset?: () => void;
+  paid?: boolean;
 }) {
   const { optimizedResume, matchScore, fullImprovements, missingKeywords, interviewPrep } = result;
 
@@ -175,9 +177,11 @@ export default function OptimizedResults({
       {/* Header */}
       <div className="flex items-center gap-3">
         <h3 className="text-xl font-bold text-gray-900">Your Optimized Package</h3>
-        <span className="text-xs font-mono bg-yellow-100 text-yellow-700 border border-yellow-300 px-2 py-0.5 rounded">
-          DEV ONLY
-        </span>
+        {!paid && (
+          <span className="text-xs font-mono bg-yellow-100 text-yellow-700 border border-yellow-300 px-2 py-0.5 rounded">
+            DEV ONLY
+          </span>
+        )}
       </div>
 
       {/* Match score */}

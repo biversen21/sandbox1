@@ -43,6 +43,8 @@ export default function OptimizerForm() {
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [optimizeError, setOptimizeError] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [checkingOut, setCheckingOut] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [optimizedResult, setOptimizedResult] = useState<OptimizedResult | null>(null);
   const [lastPayload, setLastPayload] = useState<ResolvedPayload | null>(null);
@@ -68,6 +70,7 @@ export default function OptimizerForm() {
     setExtractionError(null);
     setAnalysisError(null);
     setOptimizeError(null);
+    setCheckoutError(null);
     setResult(null);
     setOptimizedResult(null);
     setLastPayload(null);
@@ -158,6 +161,34 @@ export default function OptimizerForm() {
     }
   }
 
+  async function handleCheckout() {
+    if (!lastPayload || checkingOut) return;
+    setCheckingOut(true);
+    setCheckoutError(null);
+    try {
+      sessionStorage.setItem("jc_payload", JSON.stringify(lastPayload));
+    } catch {
+      // sessionStorage unavailable; proceed anyway
+    }
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(lastPayload),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setCheckoutError(data.error ?? "Could not start checkout. Please try again.");
+        setCheckingOut(false);
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setCheckoutError("Could not reach the checkout service. Please try again.");
+      setCheckingOut(false);
+    }
+  }
+
   function handleReset() {
     setResume("");
     setJobDescription("");
@@ -166,6 +197,7 @@ export default function OptimizerForm() {
     setExtractionError(null);
     setAnalysisError(null);
     setOptimizeError(null);
+    setCheckoutError(null);
     setResult(null);
     setOptimizedResult(null);
     setLastPayload(null);
@@ -217,6 +249,9 @@ export default function OptimizerForm() {
       {result && (
         <AnalysisResults
           result={result}
+          onCheckout={lastPayload ? handleCheckout : undefined}
+          checkingOut={checkingOut}
+          checkoutError={checkoutError}
           onUnlock={handleUnlock}
           optimizing={loadingPhase === "optimizing"}
         />
