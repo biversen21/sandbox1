@@ -57,9 +57,7 @@ export default function JobInput({
           className={`w-full border rounded-lg px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 resize-y ${borderClass}`}
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
-        {extractionError && (
-          <p className="text-xs text-red-500">{extractionError}</p>
-        )}
+        {extractionError && <p className="text-xs text-red-500">{extractionError}</p>}
       </div>
     </div>
   );
