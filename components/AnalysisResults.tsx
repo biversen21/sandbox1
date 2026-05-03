@@ -64,7 +64,13 @@ function LockIcon() {
   );
 }
 
-export default function AnalysisResults({ result }: { result: AnalysisResult }) {
+interface AnalysisResultsProps {
+  result: AnalysisResult;
+  onUnlock?: () => void;
+  optimizing?: boolean;
+}
+
+export default function AnalysisResults({ result, onUnlock, optimizing }: AnalysisResultsProps) {
   const { matchScore, summary, previewImprovements, missingKeywords } = result;
 
   return (
@@ -142,6 +148,22 @@ export default function AnalysisResults({ result }: { result: AnalysisResult }) 
           Unlock Full Analysis — Coming Soon
         </button>
       </div>
+
+      {/* Dev-only bypass */}
+      {onUnlock && (
+        <div className="flex items-center gap-3 pt-2">
+          <span className="text-xs font-mono bg-yellow-100 text-yellow-700 border border-yellow-300 px-2 py-0.5 rounded">
+            DEV ONLY
+          </span>
+          <button
+            onClick={onUnlock}
+            disabled={optimizing}
+            className="text-sm text-gray-500 hover:text-gray-800 underline underline-offset-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {optimizing ? "Generating full result..." : "Generate Full Result"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
