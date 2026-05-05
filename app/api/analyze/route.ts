@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { stripFences, buildUserMessage } from "@/lib/llmUtils";
 
 interface AnalyzeRequest {
   resumeText: string;
@@ -45,16 +46,6 @@ Scoring guide:
 20-39: Weak match, significant skills or experience missing
 0-19:  Poor match, fundamental misalignment`;
 
-function buildUserMessage(body: AnalyzeRequest): string {
-  const lines = ["RESUME:", body.resumeText.trim(), "", "JOB DESCRIPTION:", body.jobText.trim()];
-  if (body.company) lines.push("", `COMPANY: ${body.company}`);
-  if (body.role) lines.push(`ROLE: ${body.role}`);
-  return lines.join("\n");
-}
-
-function stripFences(text: string): string {
-  return text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-}
 
 export async function POST(
   req: NextRequest
