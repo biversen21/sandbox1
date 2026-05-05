@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { stripFences, safeArray, buildUserMessage } from "@/lib/llmUtils";
 
 interface OptimizeRequest {
   resumeText: string;
@@ -50,20 +51,6 @@ Respond with ONLY a valid JSON object — no markdown, no explanation, no code f
   }
 }`;
 
-function buildUserMessage(body: OptimizeRequest): string {
-  const lines = ["RESUME:", body.resumeText.trim(), "", "JOB DESCRIPTION:", body.jobText.trim()];
-  if (body.company) lines.push("", `COMPANY: ${body.company}`);
-  if (body.role) lines.push(`ROLE: ${body.role}`);
-  return lines.join("\n");
-}
-
-function stripFences(text: string): string {
-  return text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
-}
-
-function safeArray(val: unknown): string[] {
-  return Array.isArray(val) ? (val as string[]).filter((x) => typeof x === "string") : [];
-}
 
 export async function POST(
   req: NextRequest

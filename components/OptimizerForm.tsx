@@ -6,11 +6,7 @@ import JobInput from "./JobInput";
 import AnalyzeButton from "./AnalyzeButton";
 import AnalysisResults, { type AnalysisResult } from "./AnalysisResults";
 import OptimizedResults, { type OptimizedResult } from "./OptimizedResults";
-
-interface FormErrors {
-  resume?: string;
-  job?: string;
-}
+import { validate, type FormErrors } from "@/lib/formValidation";
 
 interface Touched {
   resume: boolean;
@@ -26,13 +22,6 @@ interface ResolvedPayload {
   role: string | null;
 }
 
-function validate(resumeText: string, jobText: string, jobUrl: string): FormErrors {
-  const errors: FormErrors = {};
-  if (!resumeText.trim()) errors.resume = "Please paste your resume before analyzing.";
-  if (!jobText.trim() && !jobUrl.trim())
-    errors.job = "Paste a job description or enter a job posting URL.";
-  return errors;
-}
 
 export default function OptimizerForm() {
   const [resume, setResume] = useState("");
